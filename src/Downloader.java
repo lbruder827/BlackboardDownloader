@@ -133,28 +133,30 @@ public class Downloader {
 		// switch to content frame
 		c.switchTo().frame(CONTENT_FRAME);
 		// get all of the windows on the left side
-		List<WebElement> left_side_bar = c.findElements(By
-				.xpath("//*[@id=\"courseMenuPalette_contents\"]/ul/li"));
+		WebElement left_bar = c
+				.findElement(By.id("courseMenuPalette_contents"));
+		List<WebElement> left_bar_elements = left_bar.findElements(By
+				.cssSelector("a"));
 
 		System.out.println(classname);
-		System.out.println(left_side_bar.size());
+		System.out.println(left_bar_elements.size());
 
-		for (int i = 0; i < left_side_bar.size(); i++) {
+		for (int i = 0; i < left_bar_elements.size(); i++) {
 			// do stuff
-			WebElement w = left_side_bar.get(i);
-			if (w.getText().contains("Announcement")) {
-				left_side_bar = c.findElements(By
-						.xpath("//*[@id=\"courseMenuPalette_contents\"]"));
-				Thread.sleep(MAX_WAIT);
-				break;
-			} else {
-				w.click();
-				Thread.sleep(MAX_WAIT);
-			}
-			c.navigate().back();
-			left_side_bar = c.findElements(By
-					.xpath("//*[@id=\"courseMenuPalette_contents\"]"));
-			Thread.sleep(MAX_WAIT);
+			WebElement w = left_bar_elements.get(i);
+			// if (w.getText().contains("Announcement")) {
+			// left_side_bar = c.findElements(By
+			// .xpath("//*[@id=\"courseMenuPalette_contents\"]"));
+			// Thread.sleep(MAX_WAIT);
+			// break;
+			// } else {
+			// w.click();
+			// Thread.sleep(MAX_WAIT);
+			// }
+			// c.navigate().back();
+			// left_side_bar = c.findElements(By
+			// .xpath("//*[@id=\"courseMenuPalette_contents\"]"));
+			// Thread.sleep(MAX_WAIT);
 		}
 
 		c.close();
