@@ -15,6 +15,7 @@
  * 
  */
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,8 +36,6 @@ public class Downloader {
 
 	// Link for blackboard
 	private final static String BLACKBOARD_URL = "https://blackboard.andrew.cmu.edu";
-	private final static String BLACKBOARD_URL_LOGGED_IN = "https://blackboard.andrew.cmu.edu/webapps/portal/frameset.jsp";
-
 	// Login text fields and buttons
 	private final static String LOGIN_USERNAME_FIELD = "j_username";
 	private final static String LOGIN_PASSWORD_FIELD = "j_password";
@@ -49,11 +48,15 @@ public class Downloader {
 	// Milliseconds to wait for page to load
 	private final static int MAX_WAIT = 2 * 1000;
 
+	private static ArrayList<String> extensions = new ArrayList<String>();
+
 	// Create new Chrome driver
 	private static ChromeDriver driver = new ChromeDriver();
 
 	public static void main(String[] args) throws InterruptedException {
 		boolean worked;
+
+		buildExtensionList();
 
 		// Go to blackboard website which will take us to the login page for CMU
 		driver.get(BLACKBOARD_URL);
@@ -82,6 +85,16 @@ public class Downloader {
 
 		driver.quit();
 
+	}
+
+	/**
+	 * Adds to the list of extensions the extensions accepted. Right now it's
+	 * just pdf, doc, and ppt.
+	 */
+	private static void buildExtensionList() {
+		extensions.add(".pdf");
+		extensions.add(".doc");
+		extensions.add(".ppt");
 	}
 
 	/**
@@ -130,36 +143,70 @@ public class Downloader {
 		// Let the page load
 		Thread.sleep(MAX_WAIT);
 
-		// switch to content frame
+		// Switch to the frame containing the content and get the links on the
+		// left bar
 		c.switchTo().frame(CONTENT_FRAME);
-		// get all of the windows on the left side
 		WebElement left_bar = c
 				.findElement(By.id("courseMenuPalette_contents"));
 		List<WebElement> left_bar_elements = left_bar.findElements(By
 				.cssSelector("a"));
 
-		System.out.println(classname);
-		System.out.println(left_bar_elements.size());
+		// System.out.println(classname);
+		// System.out.println(left_bar_elements.size());
 
-		for (int i = 0; i < left_bar_elements.size(); i++) {
+		// Don't need to click announcements, so we can skip it
+		for (int i = 1; i < left_bar_elements.size(); i++) {
 			// do stuff
 			WebElement w = left_bar_elements.get(i);
-			// if (w.getText().contains("Announcement")) {
-			// left_side_bar = c.findElements(By
-			// .xpath("//*[@id=\"courseMenuPalette_contents\"]"));
-			// Thread.sleep(MAX_WAIT);
-			// break;
-			// } else {
-			// w.click();
-			// Thread.sleep(MAX_WAIT);
-			// }
-			// c.navigate().back();
-			// left_side_bar = c.findElements(By
-			// .xpath("//*[@id=\"courseMenuPalette_contents\"]"));
-			// Thread.sleep(MAX_WAIT);
+			String folder = w.getText();
+
+			// follow the link
+			c.get(w.getAttribute("href"));
+			Thread.sleep(MAX_WAIT);
+
+			// pass it the driver
+			download_docs(classname, folder, c);
+
+			// get the left bar and the links on it
+			left_bar = c.findElement(By.id("courseMenuPalette_contents"));
+			left_bar_elements = left_bar.findElements(By.cssSelector("a"));
 		}
 
 		c.close();
+	}
+
+	/**
+	 * 
+	 * @param classname
+	 *            name of class on blackboard
+	 * @param folder
+	 *            name of folder on the left bar
+	 * @param c
+	 *            the chrome driver
+	 */
+	private static void download_docs(String classname, String folder,
+			ChromeDriver c) {
+		List<WebElement> sections = c.findElements(By
+				.xpath("//div[@id='containerdiv']/ul/li"));
+
+		// Loop through each section, looking for accepted extensions
+		for (WebElement w : sections) {
+			boolean found_doc = false;
+			for (String s : extensions) {
+				if (w.getText().contains(s)) {
+					found_doc = true;
+					System.out.println(s + " located");
+				}
+			}
+			if (!found_doc) {
+				// these links automatically download
+				// need to click them so they get downloaded
+				// then move them out of the downloads folder and into the
+				// correct folder
+				List<WebElement> links = w.findElements(By.cssSelector("a"));
+				System.out.println(links.size());
+			}
+		}
 	}
 
 	/**
