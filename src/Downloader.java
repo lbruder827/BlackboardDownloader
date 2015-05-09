@@ -64,6 +64,7 @@ public class Downloader {
 		} else if (OS.contains("Mac")) {
 			DOWNLOAD_FOLDER = new File("/Users/"
 					+ System.getProperty("user.name") + "/Downloads/");
+
 		}
 
 		// Make sure that the download folder is a thing
@@ -118,6 +119,7 @@ public class Downloader {
 
 		// Open the course in a new window
 		ChromeDriver c = new ChromeDriver();
+		setupAutomaticDownloads(c);
 		c.get(link);
 		// Wait for it to load
 		Thread.sleep(MAX_WAIT);
@@ -169,9 +171,8 @@ public class Downloader {
 	private static void download_docs(String classname, String folder,
 			ChromeDriver c) throws InterruptedException {
 
-		List<WebElement> sections = c
-				.findElements(By
-						.xpath("//div[@id='containerdiv']/ul/li//div[@class='details']"));
+		List<WebElement> sections = c.findElements(By
+				.xpath("//div[@id='containerdiv']/ul/li"));
 
 		System.out.println("Opening folder " + folder + " for class "
 				+ classname);
@@ -181,13 +182,14 @@ public class Downloader {
 			boolean found_doc = false;
 			for (String s : extensions) {
 				if (w.getText().contains(s)) {
-					// download the link
-					System.out.println(w.getText());
+					// opens up the document in a new page and let it load
+					w.findElement(By.cssSelector("a")).click();
+					Thread.sleep(MAX_WAIT);
+
+					// save it
+
+					// close the page
 					found_doc = true;
-					System.out.println(s + " located");
-					// c.get(w.getAttribute("href"));
-					// Thread.sleep(MAX_WAIT);
-					// c.navigate().back();
 				}
 			}
 
@@ -199,6 +201,9 @@ public class Downloader {
 				List<WebElement> links = w.findElements(By.cssSelector("a"));
 				System.out.println(links.size());
 			}
+
+			sections = c.findElements(By
+					.xpath("//div[@id='containerdiv']/ul/li"));
 		}
 
 		// go through the downloads folder, looking for things that have changed
@@ -288,5 +293,19 @@ public class Downloader {
 			courseLinks.put(courseName, url);
 		}
 		return courseLinks;
+	}
+
+	/**
+	 * Configures pdf files to automatically download on chrome
+	 * 
+	 * @param c
+	 *            chrome driver
+	 */
+	private static void setupAutomaticDownloads(ChromeDriver c) {
+		c.get("chrome:plugins");
+		c.findElement(
+				By.xpath("//*[@id=\"pluginTemplate\"]/div[2]/div[2]/div[1]/table/tbody/tr/td/div[2]/span/a[1]"))
+				.click();
+
 	}
 }
