@@ -24,8 +24,10 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 - Internet connection
 - Blackboard account
 - All of your courses MUST be visible on the blackboard homepage under the 'My Course' section
+- Your default download location MUST be the downloads folder (should be by default unless you changed it)
+-- To change it back, go to Chrome > Preferences. Click "Show Advanced Settings" at the bottom. Scroll down to 'Downloads' and ensure the location is /Users/<your username>/Downloads
 
 ##How to use
 1. Enter in your username and password into the login_info.txt file like given, with your username on the first line and password on the second line. Then enter a number between 1 and 5. This should be set depending on the speed of your internet connection where a lower number like 1 should be used if you are using a fast inernet connection and 5 for a super slow connection. This is the number of seconds it waits between loading pages to start doing stuff. All of the settings will be erased as soon as it's used, so keep this in mind when you are attempting to login multiple times.
-2. Navigate to the folder in Terminal/Console and type in java -jar Downloader.jar.
+2. Navigate to the folder that contains the 'Downloader.jar' file in Terminal/Console and type in java -jar Downloader.jar.
 3. Don't interfere with the web browser or download any documents while the program is running. It will mess up the process.
