@@ -114,7 +114,7 @@ public class Downloader {
 	private static void navigate_course(String classname, String link)
 			throws InterruptedException {
 
-		System.out.println("Opening class " + classname + " from link " + link);
+		System.out.println("Opening class " + classname);
 
 		// Open the course in a new window
 		ChromeDriver c = new ChromeDriver();
@@ -127,7 +127,7 @@ public class Downloader {
 		Thread.sleep(MAX_WAIT);
 
 		// Switch to the frame containing the content and get the links on the
-		// left bar
+		// left bar containing Syllabus, Assignments, Tools, etc.
 		c.switchTo().frame(CONTENT_FRAME);
 		WebElement left_bar = c
 				.findElement(By.id("courseMenuPalette_contents"));
@@ -169,8 +169,9 @@ public class Downloader {
 	private static void download_docs(String classname, String folder,
 			ChromeDriver c) throws InterruptedException {
 
-		List<WebElement> sections = c.findElements(By
-				.xpath("//div[@id='containerdiv']/ul/li"));
+		List<WebElement> sections = c
+				.findElements(By
+						.xpath("//div[@id='containerdiv']/ul/li//div[@class='details']"));
 
 		System.out.println("Opening folder " + folder + " for class "
 				+ classname);
@@ -180,6 +181,7 @@ public class Downloader {
 			boolean found_doc = false;
 			for (String s : extensions) {
 				if (w.getText().contains(s)) {
+					// download the link
 					System.out.println(w.getText());
 					found_doc = true;
 					System.out.println(s + " located");
@@ -198,6 +200,9 @@ public class Downloader {
 				System.out.println(links.size());
 			}
 		}
+
+		// go through the downloads folder, looking for things that have changed
+		// store them to the download folder
 	}
 
 	/**

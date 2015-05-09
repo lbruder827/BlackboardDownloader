@@ -10,6 +10,7 @@ This is the readme for the Blackboard Downloader. This program will prompt for a
 - Downloads documents off blackboard
 
 ##Requirements
+- Java
 - Google Chrome (https://www.google.com/chrome/browser/desktop/)
 - Internet connection
 - Blackboard account
