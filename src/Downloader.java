@@ -17,6 +17,7 @@
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class Downloader {
 	private final static String CONTENT_FRAME = "contentFrame";
 
 	// Max time in milliseconds to wait for the page to load
-	private final static int MAX_WAIT = 2 * 1000;
+	private final static int MAX_WAIT = 3 * 1000;
 
 	// List of accepted extensions to download
 	private static ArrayList<String> extensions = new ArrayList<String>();
@@ -50,6 +51,8 @@ public class Downloader {
 	// OS Specific fields like the OS and location of download folder
 	private static String OS = System.getProperty("os.name");
 	private static File DOWNLOAD_FOLDER;
+	private static File DOWNLOAD_DIR;
+	private static String DOWNLAD_DIR_NAME = "bb_download_";
 
 	public static void main(String[] args) throws InterruptedException {
 		boolean worked;
@@ -64,7 +67,6 @@ public class Downloader {
 		} else if (OS.contains("Mac")) {
 			DOWNLOAD_FOLDER = new File("/Users/"
 					+ System.getProperty("user.name") + "/Downloads/");
-
 		}
 
 		// Make sure that the download folder is a thing
@@ -86,6 +88,14 @@ public class Downloader {
 			return;
 		}
 
+		// Create download folder
+		DOWNLOAD_DIR = new File(DOWNLOAD_FOLDER.getAbsolutePath() + "/"
+				+ DOWNLAD_DIR_NAME + USERNAME);
+		DOWNLOAD_DIR.mkdir();
+
+		// Get the files before downloading
+		List<File> files_before = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
+
 		// Switch to the frame w/ the main content and find the place where the
 		// courses are listed
 		driver.switchTo().frame(CONTENT_FRAME);
@@ -98,6 +108,8 @@ public class Downloader {
 		for (String classname : courseLinks.keySet()) {
 			navigate_course(classname, courseLinks.get(classname));
 		}
+
+		List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
 
 		driver.quit();
 
@@ -146,8 +158,13 @@ public class Downloader {
 			c.get(w.getAttribute("href"));
 			Thread.sleep(MAX_WAIT);
 
+			// Create folder for class
+			// Create download folder
+			File classFolder = new File(DOWNLOAD_DIR + "/" + classname);
+			classFolder.mkdir();
+
 			// download the documents for this class
-			download_docs(classname, folder, c);
+			download_docs(classFolder, folder, c);
 
 			// get the left bar and the links on it
 			left_bar = c.findElement(By.id("courseMenuPalette_contents"));
@@ -157,53 +174,55 @@ public class Downloader {
 		c.close();
 	}
 
-	/**
-	 * 
-	 * @param classname
-	 *            name of class on blackboard
-	 * @param folder
-	 *            name of folder on the left bar
-	 * @param c
-	 *            the chrome driver
-	 * @throws InterruptedException
-	 *             sure
-	 */
-	private static void download_docs(String classname, String folder,
+	private static void download_docs(File classFolder, String folder,
 			ChromeDriver c) throws InterruptedException {
 
 		List<WebElement> sections = c.findElements(By
 				.xpath("//div[@id='containerdiv']/ul/li"));
 
-		System.out.println("Opening folder " + folder + " for class "
-				+ classname);
+		List<File> files_before = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
 
 		// Loop through each section, looking for accepted extensions
-		for (WebElement w : sections) {
+		for (int i = 0; i < sections.size(); i++) {
+
+			WebElement w = sections.get(i);
 			boolean found_doc = false;
+
+			// look for extensions accepted
 			for (String s : extensions) {
 				if (w.getText().contains(s)) {
 					// opens up the document in a new page and let it load
 					w.findElement(By.cssSelector("a")).click();
-					Thread.sleep(MAX_WAIT);
-
-					// save it
+					// automatically saves document
 
 					// close the page
 					found_doc = true;
 				}
 			}
 
-			if (!found_doc) {
-				// these links automatically download
-				// need to click them so they get downloaded
-				// then move them out of the downloads folder and into the
-				// correct folder
-				List<WebElement> links = w.findElements(By.cssSelector("a"));
-				System.out.println(links.size());
-			}
-
 			sections = c.findElements(By
 					.xpath("//div[@id='containerdiv']/ul/li"));
+		}
+		Thread.sleep(MAX_WAIT);
+
+		List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
+
+		// if the sizes are the same, nothing was downloaded
+		if (files_after.size() == files_before.size()) {
+			return;
+		}
+
+		// Create download folder
+		File new_folder = new File(classFolder.getAbsolutePath() + "/" + folder);
+		new_folder.mkdir();
+
+		for (File f : files_after) {
+			if (files_before.contains(f)) {
+				continue;
+			}
+			// file was just downloaded, add it to the right folder
+			f.renameTo(new File(new_folder.getAbsoluteFile() + "/"
+					+ f.getName()));
 		}
 
 		// go through the downloads folder, looking for things that have changed
