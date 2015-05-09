@@ -31,7 +31,7 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 1. Enter in your username and password into the login_info.txt file like given, with your username on the first line and password on the second line. Then enter a number between 1 and 5. This should be set depending on the speed of your internet connection where a lower number like 1 should be used if you are using a fast inernet connection and 5 for a super slow connection. This is the number of seconds it waits between loading pages to start doing stuff. All of the settings will be erased as soon as it's used, so keep this in mind when you are attempting to login multiple times.
 2. Navigate to the folder that contains the 'Downloader.jar' file in Terminal/Console and type in java -jar Downloader.jar.
    Instructions for mac:
-   Search for terminal. Type in 'cd Downloads/BlackboardDownloader'. After doing step number 1, type in 'java -jar Downloader.jar'.
+   Search for terminal. Type in 'cd Downloads/BlackboardDownloader-master/'. After doing step number 1, type in 'java -jar Downloader.jar'.
 3. Don't interfere with the web browser or download any documents while the program is running. It will mess up the process.
 
 
