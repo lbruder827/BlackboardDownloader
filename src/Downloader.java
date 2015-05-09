@@ -8,15 +8,13 @@
  * How it works:
  * 1. When run, it will open a terminal/GUI where you input your username and password.
  * 2. After that, it will find all of your courses that are located on your home page.
- * 3. For each course, it will download all files(.pdf, .doc, .docx, .ppt, .pptx, etc.)
- *    ignoring the Announcements and Tools section on the left side.
+ * 3. For each course, it will download all files and structure them the same way blackboard does.
  * 
  * 
  * 
  */
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -36,49 +34,39 @@ public class Downloader {
 	private final static String USERNAME = "lbruder";
 	private final static String PASSWORD = "";
 
-	// Blackboard related links, frames, and butons
-	private final static String BLACKBOARD_URL = "https://blackboard.andrew.cmu.edu";
-	private final static String CONTENT_FRAME = "contentFrame";
-
 	// Max time in milliseconds to wait for the page to load
-	private final static int MAX_WAIT = 3 * 1000;
+	private final static int MAX_WAIT = 2 * 1000;
 
-	// List of accepted extensions to download
-	private static ArrayList<String> extensions = new ArrayList<String>();
-
-	private static ChromeDriver driver = new ChromeDriver();
-
-	// OS Specific fields like the OS and location of download folder
-	private static String OS = System.getProperty("os.name");
+	// Download folder strings and files
 	private static File DOWNLOAD_FOLDER;
 	private static File DOWNLOAD_DIR;
 	private static String DOWNLAD_DIR_NAME = "bb_download_";
 
+	// Content iframe
+	private static String CONTENT_FRAME = "contentFrame";
+
+	private static ChromeDriver driver = new ChromeDriver();
+
 	public static void main(String[] args) throws InterruptedException {
+		String BLACKBOARD_URL = "https://blackboard.andrew.cmu.edu";
 		boolean worked;
 
-		// Setup OS specific fields like download folder locations
-		if (OS.contains("Windows")) {
-			// Default download folder for windows
-			DOWNLOAD_FOLDER = new File("C:/Users/"
-					+ System.getProperty("user.name") + "/Downloads/");
-		} else if (OS.contains("Mac")) {
-			DOWNLOAD_FOLDER = new File("/Users/"
-					+ System.getProperty("user.name") + "/Downloads/");
-		}
-
-		// Make sure that the download folder is a thing
-		if (!DOWNLOAD_FOLDER.isDirectory()) {
-			System.out.println("Not a directory");
+		// ensure download folder is directory
+		boolean is_directory = setup_download_folder();
+		if (!is_directory) {
 			driver.quit();
+			System.out.println("Error setting up download folder");
 			return;
 		}
+
+		// Ensure that PDFs download automatically instead of being viewed
+		setupAutomaticDownloads(driver);
 
 		// Go to blackboard website which will take us to the login page for CMU
 		driver.get(BLACKBOARD_URL);
 
 		// Login with username and password and ensure it worked
-		worked = login(USERNAME, PASSWORD, driver);
+		worked = login(USERNAME, PASSWORD);
 		if (!worked) {
 			System.out
 					.println("Error logging into blackboard. Please try again");
@@ -86,7 +74,7 @@ public class Downloader {
 			return;
 		}
 
-		// Create download folder
+		// Create download folder only if logged in successfully
 		DOWNLOAD_DIR = new File(DOWNLOAD_FOLDER.getAbsolutePath() + "/"
 				+ DOWNLAD_DIR_NAME + USERNAME);
 		DOWNLOAD_DIR.mkdir();
@@ -103,6 +91,7 @@ public class Downloader {
 		// Get the links to all the courses
 		HashMap<String, String> courseLinks = find_course_links(allElements);
 
+		// navigate the courses and download the content
 		for (String classname : courseLinks.keySet()) {
 			navigate_course(classname, courseLinks.get(classname));
 		}
@@ -116,6 +105,32 @@ public class Downloader {
 		}
 
 		driver.quit();
+	}
+
+	/**
+	 * Checks to make sure the download folder is a directory.
+	 * 
+	 * @return true if it is, false otherwise
+	 */
+	private static boolean setup_download_folder() {
+		// OS Specific fields like the OS and location of download folder
+		String OS = System.getProperty("os.name");
+
+		// Setup OS specific fields like download folder locations
+		if (OS.contains("Windows")) {
+			// Default download folder for windows
+			DOWNLOAD_FOLDER = new File("C:/Users/"
+					+ System.getProperty("user.name") + "/Downloads/");
+		} else if (OS.contains("Mac")) {
+			DOWNLOAD_FOLDER = new File("/Users/"
+					+ System.getProperty("user.name") + "/Downloads/");
+		}
+
+		// Make sure that the download folder is a thing
+		if (!DOWNLOAD_FOLDER.isDirectory()) {
+			return false;
+		}
+		return true;
 
 	}
 
@@ -132,23 +147,15 @@ public class Downloader {
 			throws InterruptedException {
 
 		System.out.println("Opening class " + classname);
-
-		// Open the course in a new window
-		ChromeDriver c = new ChromeDriver();
-		setupAutomaticDownloads(c);
-		c.get(link);
+		driver.get(link);
 		// Wait for it to load
-		Thread.sleep(MAX_WAIT);
-
-		// Login
-		login(USERNAME, PASSWORD, c);
 		Thread.sleep(MAX_WAIT);
 
 		// Switch to the frame containing the content and get the links on the
 		// left bar containing Syllabus, Assignments, Tools, etc.
-		c.switchTo().frame(CONTENT_FRAME);
-		WebElement left_bar = c
-				.findElement(By.id("courseMenuPalette_contents"));
+		driver.switchTo().frame(CONTENT_FRAME);
+		WebElement left_bar = driver.findElement(By
+				.id("courseMenuPalette_contents"));
 		List<WebElement> left_bar_elements = left_bar.findElements(By
 				.cssSelector("a"));
 
@@ -159,7 +166,7 @@ public class Downloader {
 			String folder = w.getText();
 
 			// follow the link and wait to load
-			c.get(w.getAttribute("href"));
+			driver.get(w.getAttribute("href"));
 			Thread.sleep(MAX_WAIT);
 
 			// Create folder for class
@@ -168,20 +175,19 @@ public class Downloader {
 			classFolder.mkdir();
 
 			// download the documents for this class
-			download_docs(classFolder, folder, c);
+			download_docs(classFolder, folder);
 
 			// get the left bar and the links on it
-			left_bar = c.findElement(By.id("courseMenuPalette_contents"));
+			left_bar = driver.findElement(By.id("courseMenuPalette_contents"));
 			left_bar_elements = left_bar.findElements(By.cssSelector("a"));
 		}
 
-		c.close();
 	}
 
-	private static void download_docs(File classFolder, String folder,
-			ChromeDriver c) throws InterruptedException {
+	private static void download_docs(File classFolder, String folder)
+			throws InterruptedException {
 
-		List<WebElement> sections = c.findElements(By
+		List<WebElement> sections = driver.findElements(By
 				.xpath("//div[@id='containerdiv']/ul/li"));
 
 		List<File> files_before = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
@@ -197,24 +203,34 @@ public class Downloader {
 				if (link.getText().contains("html")) {
 					continue;
 				}
+
+				String url_before_click = driver.getCurrentUrl();
+
 				link.click();
 				Thread.sleep(MAX_WAIT);
+
 				// Check to see if the middle_div is still visible
-				List<WebElement> middle_div = c.findElements(By
+				List<WebElement> middle_div = driver.findElements(By
 						.xpath("//div[@id='containerdiv']/ul/li"));
+
 				// if it isn't navigate back
 				if (middle_div.size() == 0) {
-					c.navigate().back();
+					driver.navigate().back();
 					Thread.sleep(1000);
+				} else {
+					if (!url_before_click.equals(driver.getCurrentUrl())) {
+						// have to be in subfolder
+					}
 				}
+
 				// otherwise, just refresh the links we have
-				sections = c.findElements(By
+				sections = driver.findElements(By
 						.xpath("//div[@id='containerdiv']/ul/li"));
 				w = sections.get(i);
 				links = w.findElements(By.cssSelector("a"));
 			}
 
-			sections = c.findElements(By
+			sections = driver.findElements(By
 					.xpath("//div[@id='containerdiv']/ul/li"));
 		}
 		Thread.sleep(MAX_WAIT);
@@ -257,8 +273,8 @@ public class Downloader {
 	 * @throws InterruptedException
 	 *             yeah, i guess
 	 */
-	private static boolean login(String username2, String password2,
-			ChromeDriver c) throws InterruptedException {
+	private static boolean login(String username2, String password2)
+			throws InterruptedException {
 		// Login text fields and buttons
 		String LOGIN_USERNAME_FIELD = "j_username";
 		String LOGIN_PASSWORD_FIELD = "j_password";
@@ -266,19 +282,21 @@ public class Downloader {
 		String AUTH_FAILED_ID = "failed";
 
 		// Enter in username
-		WebElement usernameField = c.findElement(By.name(LOGIN_USERNAME_FIELD));
+		WebElement usernameField = driver.findElement(By
+				.name(LOGIN_USERNAME_FIELD));
 		usernameField.sendKeys(USERNAME);
 
 		// Enter in password
-		WebElement passwordField = c.findElement(By.name(LOGIN_PASSWORD_FIELD));
+		WebElement passwordField = driver.findElement(By
+				.name(LOGIN_PASSWORD_FIELD));
 		passwordField.sendKeys(PASSWORD);
 
 		// Click submit button
-		WebElement submitField = c.findElement(By.name(LOGIN_SUBMIT_NAME));
+		WebElement submitField = driver.findElement(By.name(LOGIN_SUBMIT_NAME));
 		submitField.click();
 
 		// check to see if we logged in or not
-		List<WebElement> elems = c.findElements(By.id(AUTH_FAILED_ID));
+		List<WebElement> elems = driver.findElements(By.id(AUTH_FAILED_ID));
 		if (elems.isEmpty()) {
 			// Let the page load
 			Thread.sleep(MAX_WAIT);
