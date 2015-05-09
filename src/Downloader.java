@@ -14,10 +14,15 @@
  * 
  */
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -30,12 +35,14 @@ import org.openqa.selenium.chrome.ChromeDriver;
  */
 public class Downloader {
 
-	// Username and password to login into blackboard
-	private final static String USERNAME = "lbruder";
-	private final static String PASSWORD = "";
+	// Location of username and password
+	private static final String LOGIN_INFO = "login_info.txt";
 
 	// Max time in milliseconds to wait for the page to load
 	private final static int MAX_WAIT = 2 * 1000;
+
+	private static String USERNAME;
+	private static String PASSWORD;
 
 	// Download folder strings and files
 	private static File DOWNLOAD_FOLDER;
@@ -53,9 +60,24 @@ public class Downloader {
 
 		// ensure download folder is directory
 		boolean is_directory = setup_download_folder();
-		if (!is_directory) {
+		boolean login_info_good;
+
+		try {
+			login_info_good = set_login_info();
+		} catch (FileNotFoundException e) {
+			login_info_good = false;
+		} catch (IOException e) {
+			login_info_good = false;
+		}
+
+		if (!is_directory || !login_info_good) {
+			if (!is_directory) {
+				System.out.println("Error setting up download folder");
+			}
+			if (!login_info_good) {
+				System.out.println("Error while parsing " + LOGIN_INFO);
+			}
 			driver.quit();
-			System.out.println("Error setting up download folder");
 			return;
 		}
 
@@ -105,6 +127,25 @@ public class Downloader {
 		}
 
 		driver.quit();
+	}
+
+	/**
+	 * @return true if the file was parsed successfully, throws exception
+	 *         otherwise
+	 * @throws IOException
+	 *             sure
+	 * 
+	 */
+	private static boolean set_login_info() throws IOException {
+		Scanner fileScanner = new Scanner(new File(LOGIN_INFO));
+		USERNAME = fileScanner.nextLine();
+		PASSWORD = fileScanner.nextLine();
+		fileScanner.close();
+		BufferedWriter writer = new BufferedWriter(new FileWriter(LOGIN_INFO));
+		writer.write("username\n");
+		writer.write("password");
+		writer.close();
+		return true;
 	}
 
 	/**
@@ -284,12 +325,12 @@ public class Downloader {
 		// Enter in username
 		WebElement usernameField = driver.findElement(By
 				.name(LOGIN_USERNAME_FIELD));
-		usernameField.sendKeys(USERNAME);
+		usernameField.sendKeys(username2);
 
 		// Enter in password
 		WebElement passwordField = driver.findElement(By
 				.name(LOGIN_PASSWORD_FIELD));
-		passwordField.sendKeys(PASSWORD);
+		passwordField.sendKeys(password2);
 
 		// Click submit button
 		WebElement submitField = driver.findElement(By.name(LOGIN_SUBMIT_NAME));

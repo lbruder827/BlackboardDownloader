@@ -19,3 +19,8 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 - All of your courses MUST be visible on the blackboard homepage under the 'My Course' section
 
 ##How to use
+1. Enter in your username and password into the login_info.txt file like below:
+username
+password
+Right now, this is how the file looks, so erase username and password and enter in your own. This will be erased as soon as it's used, so keep this in mind when you are attempting to login multiple times.
+2. 
