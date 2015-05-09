@@ -16,7 +16,6 @@
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -39,7 +38,7 @@ public class Downloader {
 	private static final String LOGIN_INFO = "login_info.txt";
 
 	// Max time in milliseconds to wait for the page to load
-	private final static int MAX_WAIT = 2 * 1000;
+	private static int MAX_WAIT;
 
 	private static String USERNAME;
 	private static String PASSWORD;
@@ -64,9 +63,7 @@ public class Downloader {
 
 		try {
 			login_info_good = set_login_info();
-		} catch (FileNotFoundException e) {
-			login_info_good = false;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			login_info_good = false;
 		}
 
@@ -76,6 +73,8 @@ public class Downloader {
 			}
 			if (!login_info_good) {
 				System.out.println("Error while parsing " + LOGIN_INFO);
+				System.out
+						.println("Make sure your info is in the same format as given in the file");
 			}
 			driver.quit();
 			return;
@@ -92,6 +91,8 @@ public class Downloader {
 		if (!worked) {
 			System.out
 					.println("Error logging into blackboard. Please try again");
+			System.out
+					.println("Make sure your info is in the same format as given in the file");
 			driver.quit();
 			return;
 		}
@@ -140,10 +141,12 @@ public class Downloader {
 		Scanner fileScanner = new Scanner(new File(LOGIN_INFO));
 		USERNAME = fileScanner.nextLine();
 		PASSWORD = fileScanner.nextLine();
+		MAX_WAIT = fileScanner.nextInt() * 1000;
 		fileScanner.close();
 		BufferedWriter writer = new BufferedWriter(new FileWriter(LOGIN_INFO));
 		writer.write("username\n");
-		writer.write("password");
+		writer.write("password\n");
+		writer.write("number 1-5");
 		writer.close();
 		return true;
 	}
@@ -260,7 +263,11 @@ public class Downloader {
 					Thread.sleep(1000);
 				} else {
 					if (!url_before_click.equals(driver.getCurrentUrl())) {
-						// have to be in subfolder
+						String subfolder = w.findElement(
+								By.xpath("//*[@id=\"pageTitleText\"]/span"))
+								.getText();
+						// folder + something else
+						download_docs(classFolder, folder + subfolder);
 					}
 				}
 
@@ -291,6 +298,7 @@ public class Downloader {
 			if (files_before.contains(f)) {
 				continue;
 			}
+			System.out.println(f.getName() + " was downloaded.");
 			// file was just downloaded, add it to the right folder
 			f.renameTo(new File(new_folder.getAbsoluteFile() + "/"
 					+ f.getName()));
@@ -378,7 +386,7 @@ public class Downloader {
 	}
 
 	/**
-	 * Configures pdf files to automatically download on chrome
+	 * Configures PDF files to automatically download on Chrome web browser
 	 * 
 	 * @param c
 	 *            chrome driver
