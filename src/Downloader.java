@@ -109,7 +109,13 @@ public class Downloader {
 			navigate_course(classname, courseLinks.get(classname));
 		}
 
+		// Delete all files that weren't there before
 		List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
+		for (File f : files_after) {
+			if (!files_before.contains(f)) {
+				f.delete();
+			}
+		}
 
 		driver.quit();
 
