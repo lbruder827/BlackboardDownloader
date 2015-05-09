@@ -33,3 +33,7 @@ This is the README for the Blackboard Downloader. This program will prompt for a
    Instructions for mac:
    Search for terminal. Type in 'cd Downloads/BlackboardDownloader'. After doing step number 1, type in 'java -jar Downloader.jar'.
 3. Don't interfere with the web browser or download any documents while the program is running. It will mess up the process.
+
+
+##Notes
+- Sometimes when clicking on a link, it will open new tabs and you won't be able to see what is happening. You can either let it be or close those tabs.
