@@ -56,8 +56,6 @@ public class Downloader {
 
 	public static void main(String[] args) throws InterruptedException {
 		boolean worked;
-		// get list of accepted extensions
-		buildExtensionList();
 
 		// Setup OS specific fields like download folder locations
 		if (OS.contains("Windows")) {
@@ -190,20 +188,30 @@ public class Downloader {
 
 		// Loop through each section, looking for accepted extensions
 		for (int i = 0; i < sections.size(); i++) {
-
 			WebElement w = sections.get(i);
-			boolean found_doc = false;
-
-			// look for extensions accepted
-			for (String s : extensions) {
-				if (w.getText().contains(s)) {
-					// opens up the document in a new page and let it load
-					w.findElement(By.cssSelector("a")).click();
-					// automatically saves document
-
-					// close the page
-					found_doc = true;
+			List<WebElement> links = w.findElements(By.cssSelector("a"));
+			// loop through all links in the section
+			for (int j = 0; j < links.size(); j++) {
+				WebElement link = links.get(j);
+				// skips html links
+				if (link.getText().contains("html")) {
+					continue;
 				}
+				link.click();
+				Thread.sleep(MAX_WAIT);
+				// Check to see if the middle_div is still visible
+				List<WebElement> middle_div = c.findElements(By
+						.xpath("//div[@id='containerdiv']/ul/li"));
+				// if it isn't navigate back
+				if (middle_div.size() == 0) {
+					c.navigate().back();
+					Thread.sleep(1000);
+				}
+				// otherwise, just refresh the links we have
+				sections = c.findElements(By
+						.xpath("//div[@id='containerdiv']/ul/li"));
+				w = sections.get(i);
+				links = w.findElements(By.cssSelector("a"));
 			}
 
 			sections = c.findElements(By
@@ -278,16 +286,6 @@ public class Downloader {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Adds to the list of extensions the extensions accepted. Right now it's
-	 * just pdf, doc, and ppt.
-	 */
-	private static void buildExtensionList() {
-		extensions.add(".pdf");
-		extensions.add(".doc");
-		extensions.add(".ppt");
 	}
 
 	/**
