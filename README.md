@@ -32,6 +32,9 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 2. Navigate to the folder that contains the 'Downloader.jar' file in Terminal/Console and type in java -jar Downloader.jar. Instructions for mac Search for terminal. Type in 'cd Downloads/BlackboardDownloader-master/'. After doing step number 1, type in 'java -jar BlackboardDownloader.jar'. Instructions for PC: not sure yet
 3. Don't interfere with the web browser or download any documents while the program is running. It will mess up the process.
 
+##Errors
+- If at any point you receive an error along the lines of "Unsupported major.minor version...", update to the newest version of Java given in the link under "Requirements" section above.
+
 
 ##Notes
 - Sometimes when clicking on a link, it will open new tabs and you won't be able to see what is happening. You can either let it be or close those tabs.
