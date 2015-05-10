@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,9 @@ public class Downloader {
 
 	// Content iframe
 	private static String CONTENT_FRAME = "contentFrame";
+
+	// list of subfolders to visit after
+	private static ArrayList<VisitLater> visiting_later = new ArrayList<VisitLater>();
 
 	private static ChromeDriver driver = new ChromeDriver();
 
@@ -121,6 +125,18 @@ public class Downloader {
 		// navigate the courses and download the content
 		for (String classname : courseLinks.keySet()) {
 			navigate_course(classname, courseLinks.get(classname));
+		}
+
+		// Visit the subfolders
+		for (VisitLater v : visiting_later) {
+			driver.get(v.getLink());
+			try {
+				download_docs(v.getClassFolder(), v.getSubFolder());
+			} catch (InterruptedException e) {
+				System.out.println("Error downloading from subfolders");
+				driver.quit();
+				return;
+			}
 		}
 
 		// Delete all files that weren't there before
@@ -259,7 +275,7 @@ public class Downloader {
 			for (int j = 0; j < links.size(); j++) {
 				WebElement link = links.get(j);
 				// skips html links
-				if (link.getText().contains("html")) {
+				if (link.getText().contains("http")) {
 					continue;
 				}
 
@@ -278,11 +294,16 @@ public class Downloader {
 					Thread.sleep(1000);
 				} else {
 					if (!url_before_click.equals(driver.getCurrentUrl())) {
+						// just add it to a list of things to be evaluated later
 						String subfolder = w.findElement(
 								By.xpath("//*[@id=\"pageTitleText\"]/span"))
 								.getText();
 						// folder + something else
-						download_docs(classFolder, folder + subfolder);
+						VisitLater v = new VisitLater(driver.getCurrentUrl(),
+								folder + "/" + subfolder, classFolder);
+						visiting_later.add(v);
+						driver.navigate().back();
+						Thread.sleep(MAX_WAIT);
 					}
 				}
 
@@ -412,5 +433,29 @@ public class Downloader {
 				By.xpath("//*[@id=\"pluginTemplate\"]/div[2]/div[2]/div[1]/table/tbody/tr/td/div[2]/span/a[1]"))
 				.click();
 
+	}
+
+	private static class VisitLater {
+		private String link;
+		private String subfolder;
+		private File classFolder;
+
+		VisitLater(String link, String subfolder, File classFolder) {
+			this.link = link;
+			this.subfolder = subfolder;
+			this.classFolder = classFolder;
+		}
+
+		public String getLink() {
+			return link;
+		}
+
+		public String getSubFolder() {
+			return subfolder;
+		}
+
+		public File getClassFolder() {
+			return classFolder;
+		}
 	}
 }
