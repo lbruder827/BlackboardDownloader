@@ -28,7 +28,7 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 -- To change it back, go to Chrome > Preferences. Click "Show Advanced Settings" at the bottom. Scroll down to 'Downloads' and ensure the location is /Users/username/Downloads
 
 ##How to use
-1. Enter in your username and password into the login_info.txt file like given, with your username on the first line and password on the second line. Then enter a number between 1 and 5. This should be set depending on the speed of your internet connection where a lower number like 1 should be used if you are using a fast inernet connection and 5 for a super slow connection. This is the number of seconds it waits between loading pages to start doing stuff. All of the settings will be erased as soon as it's used, so keep this in mind when you are attempting to login multiple times.
+1. Open the login_info.txt file. On the first line, erase "username" and put in your blackboard username. On the second line, erase "password" and enter in your password". On the third line, erase the "number 1-5" and put a number between 1 and 5. This determines how long it will wait before clicking stuff. If you have a slow internet connection, you want to choose a number closer to 5. If you have a fast internet connection, use a number like 1 or 2.
 2. Navigate to the folder that contains the 'Downloader.jar' file in Terminal/Console and type in java -jar Downloader.jar. Instructions for mac Search for terminal. Type in 'cd Downloads/BlackboardDownloader-master/'. After doing step number 1, type in 'java -jar BlackboardDownloader.jar'. Instructions for PC: not sure yet
 3. Don't interfere with the web browser or download any documents while the program is running. It will mess up the process.
 
