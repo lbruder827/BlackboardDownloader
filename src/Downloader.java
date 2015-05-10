@@ -63,71 +63,72 @@ public class Downloader {
 
 		try {
 			login_info_good = set_login_info();
+		} catch (Exception e) {
+			login_info_good = false;
+		}
 
-			if (!is_directory || !login_info_good) {
-				if (!is_directory) {
-					System.out.println("Error setting up download folder");
-				}
-				if (!login_info_good) {
-					System.out.println("Error while parsing " + LOGIN_INFO);
-					System.out
-							.println("Make sure your info is in the same format as given in the file");
-				}
-				driver.quit();
-				return;
+		if (!is_directory || !login_info_good) {
+			if (!is_directory) {
+				System.out.println("Error setting up download folder");
 			}
-
-			// Ensure that PDFs download automatically instead of being viewed
-			setupAutomaticDownloads(driver);
-
-			// Go to blackboard website which will take us to the login page for
-			// CMU
-			driver.get(BLACKBOARD_URL);
-
-			// Login with username and password and ensure it worked
-			worked = login(USERNAME, PASSWORD);
-			if (!worked) {
-				System.out
-						.println("Error logging into blackboard. Please try again");
+			if (!login_info_good) {
+				System.out.println("Error while parsing " + LOGIN_INFO);
 				System.out
 						.println("Make sure your info is in the same format as given in the file");
-				driver.quit();
-				return;
 			}
-
-			// Create download folder only if logged in successfully
-			DOWNLOAD_DIR = new File(DOWNLOAD_FOLDER.getAbsolutePath() + "/"
-					+ DOWNLAD_DIR_NAME + USERNAME);
-			DOWNLOAD_DIR.mkdir();
-
-			// Get the files before downloading
-			List<File> files_before = Arrays
-					.asList(DOWNLOAD_FOLDER.listFiles());
-
-			// Switch to the frame w/ the main content and find the place where
-			// the
-			// courses are listed
-			driver.switchTo().frame(CONTENT_FRAME);
-			List<WebElement> allElements = driver.findElements(By
-					.xpath("//div[@id='_4_1termCourses_noterm']/ul/li"));
-
-			// Get the links to all the courses
-			HashMap<String, String> courseLinks = find_course_links(allElements);
-
-			// navigate the courses and download the content
-			for (String classname : courseLinks.keySet()) {
-				navigate_course(classname, courseLinks.get(classname));
-			}
-
-			// Delete all files that weren't there before
-			List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
-			for (File f : files_after) {
-				if (!files_before.contains(f)) {
-					f.delete();
-				}
-			}
-		} catch (Exception e) {
 			driver.quit();
+			return;
+		}
+
+		// Ensure that PDFs download automatically instead of being viewed
+		setupAutomaticDownloads(driver);
+
+		// Go to blackboard website which will take us to the login page for CMU
+		driver.get(BLACKBOARD_URL);
+
+		// Login with username and password and ensure it worked
+		try {
+			worked = login(USERNAME, PASSWORD);
+		} catch (Exception e) {
+			worked = false;
+		}
+		if (!worked) {
+			System.out
+					.println("Error logging into blackboard. Please try again");
+			System.out
+					.println("Make sure your info is in the same format as given in the file");
+			driver.quit();
+			return;
+		}
+
+		// Create download folder only if logged in successfully
+		DOWNLOAD_DIR = new File(DOWNLOAD_FOLDER.getAbsolutePath() + "/"
+				+ DOWNLAD_DIR_NAME + USERNAME);
+		DOWNLOAD_DIR.mkdir();
+
+		// Get the files before downloading
+		List<File> files_before = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
+
+		// Switch to the frame w/ the main content and find the place where the
+		// courses are listed
+		driver.switchTo().frame(CONTENT_FRAME);
+		List<WebElement> allElements = driver.findElements(By
+				.xpath("//div[@id='_4_1termCourses_noterm']/ul/li"));
+
+		// Get the links to all the courses
+		HashMap<String, String> courseLinks = find_course_links(allElements);
+
+		// navigate the courses and download the content
+		for (String classname : courseLinks.keySet()) {
+			navigate_course(classname, courseLinks.get(classname));
+		}
+
+		// Delete all files that weren't there before
+		List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
+		for (File f : files_after) {
+			if (!files_before.contains(f)) {
+				f.delete();
+			}
 		}
 
 		driver.quit();
@@ -190,13 +191,16 @@ public class Downloader {
 	 * @throws InterruptedException
 	 *             sure
 	 */
-	private static void navigate_course(String classname, String link)
-			throws InterruptedException {
+	private static void navigate_course(String classname, String link) {
 
 		System.out.println("Opening class " + classname);
 		driver.get(link);
 		// Wait for it to load
-		Thread.sleep(MAX_WAIT);
+		try {
+			Thread.sleep(MAX_WAIT);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 
 		// Switch to the frame containing the content and get the links on the
 		// left bar containing Syllabus, Assignments, Tools, etc.
@@ -214,7 +218,11 @@ public class Downloader {
 
 			// follow the link and wait to load
 			driver.get(w.getAttribute("href"));
-			Thread.sleep(MAX_WAIT);
+			try {
+				Thread.sleep(MAX_WAIT);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 
 			// Create folder for class
 			// Create download folder
@@ -222,7 +230,11 @@ public class Downloader {
 			classFolder.mkdir();
 
 			// download the documents for this class
-			download_docs(classFolder, folder);
+			try {
+				download_docs(classFolder, folder);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 
 			// get the left bar and the links on it
 			left_bar = driver.findElement(By.id("courseMenuPalette_contents"));
