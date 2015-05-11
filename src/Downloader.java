@@ -179,8 +179,7 @@ public class Downloader {
 		}
 
 		System.out
-				.println("Done! The folder containing your downloads should be in your Downloads folder located at "
-						+ DOWNLOAD_DIR);
+				.println("Done! The folder containing your downloads should be in your Downloads folder located at " + DOWNLOAD_DIR);
 
 		driver.quit();
 	}
