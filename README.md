@@ -32,6 +32,7 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 1. Open the login_info.txt file. On the first line, erase "username" and put in your blackboard username. On the second line, erase "password" and enter in your password". On the third line, erase the "number 1-5" and put a number between 1 and 5. This determines how long it will wait before clicking stuff. If you have a slow internet connection, you want to choose a number closer to 5. If you have a fast internet connection, use a number like 1 or 2.
 2. Navigate to the folder that contains the 'Downloader.jar' file in Terminal/Console and type in java -jar Downloader.jar. Instructions for mac Search for terminal. Type in 'cd Downloads/BlackboardDownloader-master/'. After doing step number 1, type in 'java -jar BlackboardDownloader.jar'. Instructions for PC: not sure yet
 3. Don't interfere with the web browser or download any documents while the program is running. There is a high chance it will open up new tabs, but you can either leave those open or close them, but DO NOT close the main tab.
+4. It will print out any errors at the end. Take note of these and download those documents afterwards.
 
 ##Errors
 - If at any point you receive an error along the lines of "Unsupported major.minor version...", update to the newest version of Java given in the link under "Requirements" section above.
