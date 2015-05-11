@@ -11,7 +11,7 @@ This is the README for the Blackboard Downloader. This program will prompt for a
 - Downloader.java
 - login_info.txt
 - README.md
-- Downloader.jar
+- BlackboardDownloader.jar
 
 ##Features
 - Downloads all documents off blackboard
