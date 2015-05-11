@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Scanner;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.UnhandledAlertException;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -41,6 +43,7 @@ public class Downloader {
 	// Max time in milliseconds to wait for the page to load
 	private static int MAX_WAIT;
 
+	// Username and password
 	private static String USERNAME;
 	private static String PASSWORD;
 
@@ -48,6 +51,8 @@ public class Downloader {
 	private static File DOWNLOAD_FOLDER;
 	private static File DOWNLOAD_DIR;
 	private static String DOWNLAD_DIR_NAME = "bb_download_";
+
+	private static ArrayList<String> errors = new ArrayList<String>();
 
 	// Content iframe
 	private static String CONTENT_FRAME = "contentFrame";
@@ -100,6 +105,8 @@ public class Downloader {
 			System.out
 					.println("Error logging into blackboard. Please try again");
 			System.out
+					.println("Make sure to enter in your username, password, and a number 1-5 between every use");
+			System.out
 					.println("Make sure your info is in the same format as given in the file");
 			driver.quit();
 			return;
@@ -127,8 +134,11 @@ public class Downloader {
 			navigate_course(classname, courseLinks.get(classname));
 		}
 
-		// Visit the subfolders
-		for (VisitLater v : visiting_later) {
+		ArrayList<VisitLater> copy = new ArrayList<VisitLater>(visiting_later);
+		visiting_later.clear();
+
+		// Visit the subfolders that we couldn't get the first time
+		for (VisitLater v : copy) {
 			driver.get(v.getLink());
 			try {
 				download_docs(v.getClassFolder(), v.getSubFolder());
@@ -139,6 +149,17 @@ public class Downloader {
 			}
 		}
 
+		for (VisitLater v : visiting_later) {
+			// let the user know that no documents were copied from these
+			// subfolders because the depth was too great
+			errors.add("The conetent contained under link " + v.getLink()
+					+ " could not be visited because the depth was too great");
+			errors.add("Please download all documents from this link and store them at "
+					+ v.getClassFolder().getAbsolutePath()
+					+ "/"
+					+ v.getSubFolder());
+		}
+
 		// Delete all files that weren't there before
 		List<File> files_after = Arrays.asList(DOWNLOAD_FOLDER.listFiles());
 		for (File f : files_after) {
@@ -146,6 +167,20 @@ public class Downloader {
 				f.delete();
 			}
 		}
+
+		System.out.println("\n\n\n");
+		System.out.println("*********** Errors ***********");
+		if (errors.size() == 0) {
+			System.out.println("None");
+		} else {
+			for (String s : errors) {
+				System.out.println(s);
+			}
+		}
+
+		System.out
+				.println("Done! The folder containing your downloads should be in your Downloads folder located at "
+						+ DOWNLOAD_DIR);
 
 		driver.quit();
 	}
@@ -249,7 +284,12 @@ public class Downloader {
 			try {
 				download_docs(classFolder, folder);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				errors.add("Error downloading documents for class " + classname
+						+ " folder " + folder);
+			} catch (WebDriverException x) {
+				errors.add("For some reason, the link wasn't clickable");
+				errors.add("Please download all documents for class: "
+						+ classname + " folder " + folder + " by yourself");
 			}
 
 			// get the left bar and the links on it
@@ -284,18 +324,31 @@ public class Downloader {
 				link.click();
 				Thread.sleep(MAX_WAIT);
 
-				// Check to see if the middle_div is still visible
-				List<WebElement> middle_div = driver.findElements(By
-						.xpath("//div[@id='containerdiv']/ul/li"));
+				List<WebElement> middle_div;
+				try {
+					// Check to see if the middle_div is still visible
+					middle_div = driver.findElements(By
+							.xpath("//div[@id='containerdiv']/ul/li"));
+				} catch (UnhandledAlertException e) {
+					// if unexpected alert pops up, dismiss it
+					driver.switchTo().alert().dismiss();
+					middle_div = driver.findElements(By
+							.xpath("//div[@id='containerdiv']/ul/li"));
+				}
 
 				// if it isn't navigate back
 				if (middle_div.size() == 0) {
 					driver.navigate().back();
 					Thread.sleep(1000);
 				} else {
-					if (!url_before_click.equals(driver.getCurrentUrl())) {
+					// if we left the blackboard page, go back
+					if (!driver.getCurrentUrl().contains("blackboard")) {
+						driver.navigate().back();
+						Thread.sleep(MAX_WAIT);
+						continue;
+					} else if (!url_before_click.equals(driver.getCurrentUrl())) {
 						// just add it to a list of things to be evaluated later
-						String subfolder = w.findElement(
+						String subfolder = driver.findElement(
 								By.xpath("//*[@id=\"pageTitleText\"]/span"))
 								.getText();
 						// folder + something else
@@ -432,7 +485,6 @@ public class Downloader {
 		c.findElement(
 				By.xpath("//*[@id=\"pluginTemplate\"]/div[2]/div[2]/div[1]/table/tbody/tr/td/div[2]/span/a[1]"))
 				.click();
-
 	}
 
 	private static class VisitLater {
